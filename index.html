@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نتائج امتحانات الطلاب - لوحة البيانات الشاملة</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -121,6 +123,35 @@
             outline: none;
             border-color: #4facfe;
             box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .download-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+        }
+
+        .download-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+        }
+
+        .download-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .download-btn:active:not(:disabled) {
+            transform: translateY(0);
         }
 
         .dashboard {
@@ -374,6 +405,11 @@
                         <option value="">-- اختر الشعبة --</option>
                     </select>
                 </div>
+                <div class="control-group">
+                    <button id="downloadPdfBtn" onclick="downloadPDF()" disabled class="download-btn">
+                        📄 تحميل PDF
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -571,6 +607,7 @@
 
             if (!selectedGrade || !selectedSection) {
                 document.getElementById('dashboard').innerHTML = '<div class="no-data">اختر الصف والشعبة لعرض النتائج</div>';
+                updateDownloadButton();
                 return;
             }
 
@@ -578,6 +615,7 @@
             const sectionData = gradeData.sections[selectedSection];
 
             displayData(gradeData, sectionData);
+            updateDownloadButton();
         }
 
         function displayData(gradeData, sectionData) {
@@ -756,6 +794,96 @@
                 document.querySelector('.header p').textContent = 'العام الدراسي 2024/2025';
             }
         });
+
+        // PDF Download Function
+        async function downloadPDF() {
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            const originalText = downloadBtn.innerHTML;
+            
+            try {
+                // Show loading state
+                downloadBtn.innerHTML = '⏳ جاري التحميل...';
+                downloadBtn.disabled = true;
+
+                // Get the dashboard content
+                const dashboard = document.getElementById('dashboard');
+                const container = document.querySelector('.container');
+                
+                // Wait for charts to render
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Capture the entire container as canvas
+                const canvas = await html2canvas(container, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    width: container.scrollWidth,
+                    height: container.scrollHeight,
+                    scrollX: 0,
+                    scrollY: 0
+                });
+
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                // Calculate dimensions
+                const imgWidth = 210; // A4 width in mm
+                const pageHeight = 295; // A4 height in mm
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                // Add image to PDF
+                const imgData = canvas.toDataURL('image/png');
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                // Add additional pages if needed
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+
+                // Generate filename
+                const gradeSelect = document.getElementById('gradeSelect');
+                const sectionSelect = document.getElementById('sectionSelect');
+                const gradeName = gradeSelect.options[gradeSelect.selectedIndex].text;
+                const sectionName = sectionSelect.options[sectionSelect.selectedIndex].text;
+                const filename = `نتائج_${gradeName}_${sectionName}_${new Date().toLocaleDateString('ar-SA')}.pdf`;
+
+                // Download PDF
+                pdf.save(filename);
+
+            } catch (error) {
+                console.error('Error generating PDF:', error);
+                alert('حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مرة أخرى.');
+            } finally {
+                // Reset button state
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            }
+        }
+
+        // Enable/disable download button based on selection
+        function updateDownloadButton() {
+            const gradeSelect = document.getElementById('gradeSelect');
+            const sectionSelect = document.getElementById('sectionSelect');
+            const downloadBtn = document.getElementById('downloadPdfBtn');
+            
+            if (gradeSelect.value && sectionSelect.value) {
+                downloadBtn.disabled = false;
+            } else {
+                downloadBtn.disabled = true;
+            }
+        }
+
+        // Update download button state when selections change
+        document.getElementById('gradeSelect').addEventListener('change', updateDownloadButton);
+        document.getElementById('sectionSelect').addEventListener('change', updateDownloadButton);
     </script>
 </body>
 </html>
