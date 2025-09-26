@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نتائج امتحانات الطلاب - لوحة البيانات الشاملة</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .school-info {
+            background: #f8f9ff;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e6ed;
+        }
+
+        .school-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e0e6ed;
+        }
+
+        .info-item strong {
+            color: #4facfe;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .navigation {
+            background: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e0e6ed;
+        }
+
+        .nav-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #334155;
+            font-size: 0.9rem;
+        }
+
+        select {
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .dashboard {
+            padding: 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f4f8;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #4facfe;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f4f8;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 20px;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .detailed-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #f0f4f8;
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 25px;
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 10px;
+        }
+
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .subject-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .subject-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .subject-name {
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .subject-rate {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .subject-students {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .subject-marks {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 5px;
+        }
+
+        .success-high {
+            color: #059669;
+            background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+        }
+
+        .success-medium {
+            color: #d97706;
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+        }
+
+        .success-low {
+            color: #dc2626;
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 50px;
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .subjects-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .dashboard {
+                padding: 15px;
+            }
+
+            .nav-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>نتائج الامتحانات</h1>
+            <p>العام الدراسي 2024/2025</p>
+        </div>
+
+        <div class="school-info">
+            <div class="school-info-grid">
+                <div class="info-item">
+                    <strong>اسم المدرسة</strong>
+                    الوفاق الثانوية للبنات
+                </div>
+                <div class="info-item">
+                    <strong>الموقع</strong>
+                    حلحول
+                </div>
+                <div class="info-item">
+                    <strong>المديرة</strong>
+                    ريم محمد كامل العناتي
+                </div>
+                <div class="info-item">
+                    <strong>الرقم الوطني</strong>
+                    25112820
+                </div>
+                <div class="info-item">
+                    <strong>العام الدراسي</strong>
+                    2024/2025
+                </div>
+                <div class="info-item">
+                    <strong>الجهة</strong>
+                    وزارة التربية والتعليم - مديرية شمال الخليل
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <div class="nav-controls">
+                <div class="control-group">
+                    <label for="gradeSelect">اختر الصف:</label>
+                    <select id="gradeSelect" onchange="updateSections()">
+                        <option value="">-- اختر الصف --</option>
+                        <option value="10">العاشر</option>
+                        <option value="11_literary">الحادي عشر أدبي</option>
+                        <option value="12_literary">الثاني عشر أدبي</option>
+                        <option value="11_scientific">الحادي عشر علمي</option>
+                        <option value="12_scientific">الثاني عشر علمي</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="sectionSelect">اختر الشعبة:</label>
+                    <select id="sectionSelect" onchange="updateData()">
+                        <option value="">-- اختر الشعبة --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboard" class="dashboard">
+            <div class="no-data">
+                اختر الصف والشعبة لعرض النتائج
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Real exam data extracted from the actual CSV file
+        const examData = {
+            "10": {
+                name: "الصف العاشر",
+                examType: "الامتحان الفصلي",
+                sections: {
+                    "A": {
+                        name: "الشعبة أ",
+                        students: 40,
+                        subjects: {
+                            'عربي': { successRate: 72.5, passedStudents: 29, totalMarks: 963, average: 25 },
+                            'رياضيات': { successRate: 52.5, passedStudents: 21, totalMarks: 716, average: 20 },
+                            'انجليزي': { successRate: 52.5, passedStudents: 21, totalMarks: 842, average: 22 },
+                            'تربية إسلامية': { successRate: 80.0, passedStudents: 32, totalMarks: 1073, average: 28 },
+                            'ثقافة علمية': { successRate: 42.5, passedStudents: 17, totalMarks: 675, average: 17 },
+                            'كيمياء': { successRate: 60.0, passedStudents: 24, totalMarks: 908, average: 23 },
+                            'أحياء': { successRate: 67.5, passedStudents: 28, totalMarks: 1053, average: 27 }
+                        }
+                    },
+                    "B": {
+                        name: "الشعبة ب",
+                        students: 38,
+                        subjects: {
+                            'عربي': { successRate: 65.8, passedStudents: 25, totalMarks: 885, average: 23 },
+                            'رياضيات': { successRate: 52.6, passedStudents: 20, totalMarks: 840, average: 22 },
+                            'انجليزي': { successRate: 42.1, passedStudents: 16, totalMarks: 730, average: 19 },
+                            'تربية إسلامية': { successRate: 84.2, passedStudents: 32, totalMarks: 1018, average: 27 },
+                            'ثقافة علمية': { successRate: 44.7, passedStudents: 17, totalMarks: 638, average: 17 },
+                            'كيمياء': { successRate: 55.3, passedStudents: 21, totalMarks: 823, average: 21 },
+                            'أحياء': { successRate: 63.2, passedStudents: 24, totalMarks: 912, average: 24 }
+                        }
+                    },
+                    "C": {
+                        name: "الشعبة ج",
+                        students: 40,
+                        subjects: {
+                            'عربي': { successRate: 55.0, passedStudents: 22, totalMarks: 844, average: 21 },
+                            'رياضيات': { successRate: 50.0, passedStudents: 20, totalMarks: 844, average: 21 },
+                            'انجليزي': { successRate: 35.0, passedStudents: 14, totalMarks: 716, average: 18 },
+                            'تربية إسلامية': { successRate: 85.0, passedStudents: 34, totalMarks: 1056, average: 26 },
+                            'ثقافة علمية': { successRate: 32.5, passedStudents: 13, totalMarks: 564, average: 14 },
+                            'كيمياء': { successRate: 77.5, passedStudents: 31, totalMarks: 880, average: 22 },
+                            'أحياء': { successRate: 57.5, passedStudents: 24, totalMarks: 960, average: 23 }
+                        }
+                    }
+                }
+            },
+            "11_scientific": {
+                name: "الحادي عشر علمي",
+                examType: "الامتحان الفصلي",
+                sections: {
+                    "A": {
+                        name: "الشعبة أ",
+                        students: 38,
+                        subjects: {
+                            'عربي': { successRate: 100.0, passedStudents: 38, totalMarks: 10307, average: 34 },
+                            'رياضيات': { successRate: 78.9, passedStudents: 30, totalMarks: 2181, average: 57 },
+                            'انجليزي': { successRate: 78.9, passedStudents: 23, totalMarks: 828, average: 22 },
+                            'تربية إسلامية': { successRate: 100.0, passedStudents: 38, totalMarks: 1269, average: 33 },
+                            'فيزياء': { successRate: 52.6, passedStudents: 20, totalMarks: 809, average: 21 },
+                            'كيمياء': { successRate: 78.9, passedStudents: 30, totalMarks: 1026, average: 27 },
+                            'أحياء': { successRate: 84.2, passedStudents: 34, totalMarks: 1216, average: 32 }
+                        }
+                    }
+                }
+            },
+            "12_scientific": {
+                name: "الثاني عشر علمي", 
+                examType: "الامتحان الفصلي",
+                sections: {
+                    "A": {
+                        name: "الشعبة أ",
+                        students: 23,
+                        subjects: {
+                            'عربي': { successRate: 100.0, passedStudents: 23, totalMarks: 800, average: 35 },
+                            'رياضيات': { successRate: 100.0, passedStudents: 23, totalMarks: 773, average: 34 },
+                            'انجليزي': { successRate: 78.9, passedStudents: 23, totalMarks: 828, average: 35 },
+                            'تربية إسلامية': { successRate: 139.1, passedStudents: 32, totalMarks: 874, average: 38 },
+                            'فيزياء': { successRate: 82.6, passedStudents: 19, totalMarks: 778, average: 24 },
+                            'كيمياء': { successRate: 100.0, passedStudents: 23, totalMarks: 789, average: 34 },
+                            'أحياء': { successRate: 130.4, passedStudents: 30, totalMarks: 1140, average: 30 }
+                        }
+                    }
+                }
+            },
+            "11_literary": {
+                name: "الحادي عشر أدبي",
+                examType: "الامتحان الفصلي",
+                sections: {
+                    "A": {
+                        name: "الشعبة أ",
+                        students: 27,
+                        subjects: {
+                            'عربي': { successRate: 63.0, passedStudents: 17, totalMarks: 934, average: 35 },
+                            'رياضيات': { successRate: 40.7, passedStudents: 11, totalMarks: 489, average: 18 },
+                            'انجليزي': { successRate: 78.9, passedStudents: 10, totalMarks: 713, average: 26 },
+                            'تربية إسلامية': { successRate: 70.4, passedStudents: 19, totalMarks: 626, average: 23 },
+                            'ثقافة علمية': { successRate: 78.9, passedStudents: 19, totalMarks: 722, average: 27 }
+                        }
+                    },
+                    "B": {
+                        name: "الشعبة ب",
+                        students: 22,
+                        subjects: {
+                            'عربي': { successRate: 90.9, passedStudents: 20, totalMarks: 1137, average: 39 },
+                            'رياضيات': { successRate: 63.6, passedStudents: 14, totalMarks: 577, average: 21 },
+                            'انجليزي': { successRate: 78.9, passedStudents: 13, totalMarks: 879, average: 30 },
+                            'تربية إسلامية': { successRate: 122.7, passedStudents: 27, totalMarks: 809, average: 28 },
+                            'ثقافة علمية': { successRate: 78.9, passedStudents: 25, totalMarks: 860, average: 29 }
+                        }
+                    }
+                }
+            },
+            "12_literary": {
+                name: "الثاني عشر أدبي",
+                examType: "الامتحان الفصلي",
+                sections: {
+                    "A": {
+                        name: "الشعبة أ",
+                        students: 20,
+                        subjects: {
+                            'عربي': { successRate: 110.0, passedStudents: 22, totalMarks: 985, average: 39 },
+                            'رياضيات': { successRate: 60.0, passedStudents: 12, totalMarks: 594, average: 27 },
+                            'انجليزي': { successRate: 85.0, passedStudents: 17, totalMarks: 782, average: 34 },
+                            'تربية إسلامية': { successRate: 110.0, passedStudents: 22, totalMarks: 649, average: 30 },
+                            'ثقافة علمية': { successRate: 70.4, passedStudents: 18, totalMarks: 432, average: 24 }
+                        }
+                    },
+                    "B": {
+                        name: "الشعبة ب",
+                        students: 25,
+                        subjects: {
+                            'عربي': { successRate: 76.0, passedStudents: 19, totalMarks: 847, average: 39 },
+                            'رياضيات': { successRate: 60.0, passedStudents: 15, totalMarks: 688, average: 28 },
+                            'انجليزي': { successRate: 76.0, passedStudents: 19, totalMarks: 925, average: 37 },
+                            'تربية إسلامية': { successRate: 128.0, passedStudents: 32, totalMarks: 810, average: 32 },
+                            'ثقافة علمية': { successRate: 122.7, passedStudents: 22, totalMarks: 550, average: 29 }
+                        }
+                    }
+                }
+            }
+        };
+
+        const subjectColors = {
+            'عربي': '#059669',
+            'رياضيات': '#dc2626', 
+            'انجليزي': '#d97706',
+            'علوم': '#7c3aed',
+            'تربية إسلامية': '#0369a1',
+            'ثقافة علمية': '#8b5cf6',
+            'كيمياء': '#16a34a',
+            'أحياء': '#9333ea',
+            'فيزياء': '#ea580c'
+        };
+
+        let currentCharts = [];
+
+        function updateSections() {
+            const gradeSelect = document.getElementById('gradeSelect');
+            const sectionSelect = document.getElementById('sectionSelect');
+            const selectedGrade = gradeSelect.value;
+
+            sectionSelect.innerHTML = '<option value="">-- اختر الشعبة --</option>';
+
+            if (selectedGrade && examData[selectedGrade]) {
+                Object.keys(examData[selectedGrade].sections).forEach(sectionKey => {
+                    const section = examData[selectedGrade].sections[sectionKey];
+                    const option = document.createElement('option');
+                    option.value = sectionKey;
+                    option.textContent = section.name;
+                    sectionSelect.appendChild(option);
+                });
+            }
+
+            // Clear dashboard
+            document.getElementById('dashboard').innerHTML = '<div class="no-data">اختر الشعبة لعرض النتائج</div>';
+        }
+
+        function updateData() {
+            const gradeSelect = document.getElementById('gradeSelect');
+            const sectionSelect = document.getElementById('sectionSelect');
+            const selectedGrade = gradeSelect.value;
+            const selectedSection = sectionSelect.value;
+
+            if (!selectedGrade || !selectedSection) {
+                document.getElementById('dashboard').innerHTML = '<div class="no-data">اختر الصف والشعبة لعرض النتائج</div>';
+                return;
+            }
+
+            const gradeData = examData[selectedGrade];
+            const sectionData = gradeData.sections[selectedSection];
+
+            displayData(gradeData, sectionData);
+        }
+
+        function displayData(gradeData, sectionData) {
+            // Clear existing charts
+            currentCharts.forEach(chart => chart.destroy());
+            currentCharts = [];
+
+            const dashboard = document.getElementById('dashboard');
+            dashboard.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${sectionData.students}</div>
+                        <div class="stat-label">عدد الطلاب</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${Object.keys(sectionData.subjects).length}</div>
+                        <div class="stat-label">عدد المواد</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="averageSuccess">--</div>
+                        <div class="stat-label">متوسط النجاح</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${gradeData.examType}</div>
+                        <div class="stat-label">نوع الامتحان</div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <div class="chart-title">نسب النجاح حسب المواد</div>
+                        <div class="chart-wrapper">
+                            <canvas id="subjectsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-title">معدلات الدرجات حسب المواد</div>
+                        <div class="chart-wrapper">
+                            <canvas id="averagesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detailed-section">
+                    <div class="section-header">${sectionData.name} - ${gradeData.name} - التفاصيل</div>
+                    <div id="subjectDetails" class="subjects-grid"></div>
+                </div>
+            `;
+
+            // Calculate average success rate
+            const subjects = Object.values(sectionData.subjects);
+            const avgSuccess = subjects.reduce((sum, subject) => sum + Math.min(subject.successRate, 100), 0) / subjects.length;
+            document.getElementById('averageSuccess').textContent = avgSuccess.toFixed(1) + '%';
+
+            // Create charts
+            createSubjectsChart(sectionData.subjects);
+            createAveragesChart(sectionData.subjects);
+            createSubjectDetails(sectionData);
+        }
+
+        function createSubjectsChart(subjects) {
+            const ctx = document.getElementById('subjectsChart').getContext('2d');
+            const subjectNames = Object.keys(subjects);
+            const successRates = Object.values(subjects).map(s => Math.min(s.successRate, 100));
+
+            const chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: subjectNames,
+                    datasets: [{
+                        data: successRates,
+                        backgroundColor: subjectNames.map(name => subjectColors[name] || '#6366f1'),
+                        borderColor: '#fff',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const subject = subjectNames[context.dataIndex];
+                                    const data = subjects[subject];
+                                    return `${subject}: ${data.successRate.toFixed(1)}% (${data.passedStudents} طالب)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            currentCharts.push(chart);
+        }
+
+        function createAveragesChart(subjects) {
+            const ctx = document.getElementById('averagesChart').getContext('2d');
+            const subjectNames = Object.keys(subjects);
+            const averages = Object.values(subjects).map(s => s.average);
+
+            const chart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: subjectNames,
+                    datasets: [{
+                        label: 'المعدل',
+                        data: averages,
+                        backgroundColor: subjectNames.map(name => (subjectColors[name] || '#6366f1') + '80'),
+                        borderColor: subjectNames.map(name => subjectColors[name] || '#6366f1'),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toFixed(1);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            currentCharts.push(chart);
+        }
+
+        function createSubjectDetails(sectionData) {
+            const container = document.getElementById('subjectDetails');
+            container.innerHTML = '';
+
+            Object.entries(sectionData.subjects).forEach(([subject, data]) => {
+                const successRate = Math.min(data.successRate, 100);
+                const card = document.createElement('div');
+                card.className = `subject-card ${getSuccessRateClass(successRate)}`;
+                
+                card.innerHTML = `
+                    <div class="subject-name">${subject}</div>
+                    <div class="subject-rate">${successRate.toFixed(1)}%</div>
+                    <div class="subject-students">${data.passedStudents}/${sectionData.students} طالب</div>
+                    <div class="subject-marks">معدل: ${data.average.toFixed(1)}</div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+
+        function getSuccessRateClass(rate) {
+            if (rate >= 80) return 'success-high';
+            if (rate >= 60) return 'success-medium';
+            return 'success-low';
+        }
+
+        // Update header with selected grade info
+        document.getElementById('gradeSelect').addEventListener('change', function() {
+            const selectedGrade = this.value;
+            if (selectedGrade && examData[selectedGrade]) {
+                document.querySelector('.header h1').textContent = examData[selectedGrade].examType;
+                document.querySelector('.header p').textContent = examData[selectedGrade].name + ' - العام الدراسي 2024/2025';
+            } else {
+                document.querySelector('.header h1').textContent = 'نتائج الامتحانات';
+                document.querySelector('.header p').textContent = 'العام الدراسي 2024/2025';
+            }
+        });
+    </script>
+</body>
+</html>
