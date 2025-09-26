@@ -392,6 +392,7 @@
                     <label for="gradeSelect">اختر الصف:</label>
                     <select id="gradeSelect" onchange="updateSections()">
                         <option value="">-- اختر الصف --</option>
+                        <option value="9">التاسع</option>
                         <option value="10">العاشر</option>
                         <option value="11_literary">الحادي عشر أدبي</option>
                         <option value="12_literary">الثاني عشر أدبي</option>
@@ -423,6 +424,34 @@
     <script>
         // Real exam data extracted from the actual CSV file
         const examData = {
+            "9": {
+                name: "الصف التاسع",
+                examType: "الامتحان الفصلي",
+                sections: {
+                    "A": {
+                        name: "الشعبة أ",
+                        students: 29,
+                        subjects: {
+                            'عربي': { successRate: 86.2, passedStudents: 25, totalMarks: 861, average: 30 },
+                            'رياضيات': { successRate: 75.9, passedStudents: 22, totalMarks: 800, average: 26 },
+                            'انجليزي': { successRate: 58.6, passedStudents: 17, totalMarks: 690, average: 24 },
+                            'علوم': { successRate: 82.8, passedStudents: 24, totalMarks: 755, average: 26 },
+                            'تربية إسلامية': { successRate: 93.1, passedStudents: 27, totalMarks: 750, average: 24 }
+                        }
+                    },
+                    "B": {
+                        name: "الشعبة ب",
+                        students: 30,
+                        subjects: {
+                            'عربي': { successRate: 76.7, passedStudents: 23, totalMarks: 834, average: 28 },
+                            'رياضيات': { successRate: 93.3, passedStudents: 28, totalMarks: 820, average: 25 },
+                            'انجليزي': { successRate: 43.3, passedStudents: 13, totalMarks: 594, average: 20 },
+                            'علوم': { successRate: 83.3, passedStudents: 25, totalMarks: 800, average: 30 },
+                            'تربية إسلامية': { successRate: 80.0, passedStudents: 24, totalMarks: 760, average: 25 }
+                        }
+                    }
+                }
+            },
             "10": {
                 name: "الصف العاشر",
                 examType: "الامتحان الفصلي",
